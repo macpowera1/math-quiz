@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Math Quiz">
+<title>Math Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg1: #0f2027; --bg2: #203a43; --bg3: #2c5364;
+    --cyan: #06b6d4; --cyan2: #0891b2; --cyan-light: #67e8f9;
+    --indigo: #6366f1; --indigo2: #4f46e5;
+    --green: #4ade80; --red: #f87171; --amber: #fbbf24;
+    --white10: rgba(255,255,255,0.10);
+    --white20: rgba(255,255,255,0.20);
+    --white40: rgba(255,255,255,0.40);
+    --white60: rgba(255,255,255,0.60);
+    --card-bg: rgba(255,255,255,0.07);
+    --card-border: rgba(255,255,255,0.13);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow-x: hidden; }
+  body {
+    font-family: 'Nunito', 'Trebuchet MS', sans-serif;
+    background: linear-gradient(160deg, var(--bg1), var(--bg2), var(--bg3));
+    min-height: 100vh; color: #fff;
+    -webkit-font-smoothing: antialiased;
+  }
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: block; }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 28px 18px 60px; }
+
+  .card {
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 20px;
+    border: 1px solid var(--card-border);
+    padding: 20px 18px;
+    margin-bottom: 14px;
+  }
+  .pill { display: inline-block; border-radius: 99px; padding: 3px 12px; font-size: 11px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 10px; }
+  .pill-cyan   { background: rgba(6,182,212,0.2);  color: var(--cyan-light); }
+  .pill-red    { background: rgba(239,68,68,0.2);  color: #fca5a5; }
+  .pill-violet { background: rgba(139,92,246,0.2); color: #c4b5fd; }
+  .pill-amber  { background: rgba(251,191,36,0.2); color: #fde68a; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; border: none; border-radius: 14px; cursor: pointer; font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 15px; padding: 14px 18px; transition: opacity 0.15s, transform 0.1s; color: #fff; }
+  .btn:active { transform: scale(0.97); opacity: 0.9; }
+  .btn-full   { width: 100%; }
+  .btn-cyan   { background: linear-gradient(135deg, var(--cyan), var(--cyan2)); box-shadow: 0 4px 14px rgba(6,182,212,0.4); }
+  .btn-indigo { background: linear-gradient(135deg, var(--indigo), var(--indigo2)); box-shadow: 0 4px 14px rgba(99,102,241,0.4); }
+  .btn-ghost  { background: var(--white10); border: 1px solid var(--white20); }
+  .btn-hint   { background: rgba(251,191,36,0.18); border: 1.5px solid rgba(251,191,36,0.35); width: 52px; height: 52px; border-radius: 14px; font-size: 20px; padding: 0; flex-shrink: 0; }
+  .btn-row    { display: flex; gap: 10px; margin-top: 14px; }
+
+  .upload-zone { border: 2px dashed var(--white20); border-radius: 16px; padding: 28px 20px; text-align: center; cursor: pointer; background: rgba(255,255,255,0.04); margin-bottom: 14px; transition: border-color 0.2s, background 0.2s; }
+  .upload-zone:hover, .upload-zone.drag { border-color: var(--cyan); background: rgba(6,182,212,0.06); }
+  .upload-zone .icon  { font-size: 34px; margin-bottom: 8px; }
+  .upload-zone .label { font-size: 15px; font-weight: 800; }
+  .upload-zone .sub   { font-size: 12px; color: var(--white40); margin-top: 4px; }
+
+  .text-input { width: 100%; padding: 13px 15px; border-radius: 12px; border: 1.5px solid var(--white20); background: rgba(255,255,255,0.08); color: #fff; font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 700; outline: none; transition: border-color 0.2s; -webkit-appearance: none; }
+  .text-input:focus { border-color: var(--cyan); }
+  .text-input::placeholder { color: var(--white40); }
+
+  #prog-track { height: 4px; background: var(--white10); position: sticky; top: 0; z-index: 10; }
+  #prog-fill  { height: 100%; background: linear-gradient(90deg,var(--cyan),var(--indigo)); transition: width 0.4s; }
+
+  .dots { display: flex; gap: 5px; margin-bottom: 18px; }
+  .dot  { flex: 1; height: 6px; border-radius: 3px; background: var(--white10); transition: background 0.3s; }
+  .dot.current { background: var(--white40); }
+  .dot.ok  { background: var(--green); }
+  .dot.bad { background: var(--red); }
+
+  .math-box { background: rgba(255,255,255,0.06); border-radius: 14px; padding: 18px 12px; display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; min-height: 80px; }
+  .mixed       { display: inline-flex; align-items: center; gap: 4px; font-weight: 900; }
+  .mixed .whole{ font-size: 34px; color: #fff; }
+  .mixed .frac { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .mixed .fnum { font-size: 18px; color: var(--cyan-light); font-weight: 900; }
+  .mixed .fline{ width: 100%; height: 2px; background: rgba(255,255,255,0.8); border-radius: 2px; }
+  .mixed .fden { font-size: 18px; color: rgba(255,255,255,0.7); font-weight: 900; }
+  .op-sym      { font-size: 28px; font-weight: 900; color: var(--cyan-light); margin: 0 4px; }
+
+  .answer-area  { background: rgba(99,102,241,0.12); border: 1.5px solid rgba(99,102,241,0.3); border-radius: 14px; padding: 14px; }
+  .answer-label { font-size: 11px; font-weight: 800; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px; }
+  .num-input { width: 60px; height: 52px; border-radius: 10px; border: 2.5px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: #fff; font-size: 22px; font-weight: 900; text-align: center; font-family: 'Nunito', sans-serif; outline: none; -webkit-appearance: none; transition: border-color 0.2s, background 0.2s; }
+  .num-input.wide { width: 64px; }
+  .num-input:focus { border-color: var(--indigo); }
+  .num-input.ok  { border-color: var(--green); background: rgba(74,222,128,0.15); }
+  .num-input.bad { border-color: var(--red);   background: rgba(248,113,113,0.15); }
+  .num-input:disabled { opacity: 0.7; }
+  .frac-inputs { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .frac-line   { width: 60px; height: 2.5px; background: rgba(255,255,255,0.6); border-radius: 2px; }
+  .input-row   { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  .mode-toggle { display: flex; border-radius: 10px; overflow: hidden; border: 1.5px solid var(--white20); margin-bottom: 12px; }
+  .mode-btn    { flex: 1; padding: 8px 0; border: none; cursor: pointer; font-family: 'Nunito',sans-serif; font-size: 12px; font-weight: 800; background: transparent; color: var(--white40); transition: all 0.2s; }
+  .mode-btn.on { background: rgba(6,182,212,0.3); color: #fff; }
+
+  .feedback { border-radius: 14px; padding: 12px 14px; margin-top: 12px; display: flex; align-items: flex-start; gap: 10px; }
+  .feedback.ok  { background: rgba(74,222,128,0.12);  border: 1.5px solid rgba(74,222,128,0.35); }
+  .feedback.bad { background: rgba(248,113,113,0.12); border: 1.5px solid rgba(248,113,113,0.35); }
+  .feedback .fb-icon   { font-size: 22px; flex-shrink: 0; }
+  .feedback .fb-title  { font-size: 14px; font-weight: 800; margin-bottom: 2px; }
+  .feedback .fb-detail { font-size: 13px; color: var(--white60); font-weight: 600; }
+
+  .hint-box   { background: rgba(251,191,36,0.10); border: 1.5px solid rgba(251,191,36,0.3); border-radius: 14px; padding: 14px; margin-top: 12px; }
+  .hint-title { font-size: 11px; font-weight: 800; color: var(--amber); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+  .hint-step  { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 7px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85); }
+  .step-num   { background: #f59e0b; color: #fff; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+
+  .result-item     { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 12px; margin-bottom: 8px; }
+  .result-item.ok  { background: rgba(74,222,128,0.10);  border: 1px solid rgba(74,222,128,0.25); }
+  .result-item.bad { background: rgba(248,113,113,0.10); border: 1px solid rgba(248,113,113,0.25); }
+  .result-item .ri-icon { font-size: 16px; }
+  .result-item .ri-prob { font-size: 13px; font-weight: 800; }
+  .result-item .ri-ans  { font-size: 12px; color: var(--white40); margin-top: 2px; }
+
+  .hist-item  { display: flex; justify-content: space-between; align-items: center; }
+  .hist-score { font-size: 20px; font-weight: 900; text-align: right; }
+  .hist-pct   { font-size: 12px; color: var(--white40); }
+
+  .setup-hero    { text-align: center; margin-bottom: 28px; padding-top: 8px; }
+  .setup-hero .emoji { font-size: 52px; margin-bottom: 10px; }
+  .setup-hero h1 { font-size: 26px; font-weight: 900; letter-spacing: -0.5px; }
+  .setup-hero p  { font-size: 13px; color: var(--white60); margin-top: 6px; font-weight: 600; }
+
+  #screen-generating { display: none; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 40px; }
+  #screen-generating.active { display: flex; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .spinner { font-size: 52px; animation: spin 1.5s linear infinite; margin-bottom: 20px; }
+
+  .error-msg     { color: #f87171; font-size: 13px; font-weight: 700; margin-top: 8px; }
+  .section-label { font-size: 11px; font-weight: 800; color: var(--white40); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 10px; }
+  .score-big     { font-size: 56px; font-weight: 900; color: var(--cyan-light); line-height: 1; }
+  .back-btn      { background: var(--white10); border: none; color: #fff; border-radius: 10px; padding: 8px 14px; font-family: 'Nunito',sans-serif; font-weight: 800; font-size: 14px; cursor: pointer; margin-bottom: 20px; }
+  .api-note      { background: rgba(251,191,36,0.1); border: 1.5px solid rgba(251,191,36,0.3); border-radius: 14px; padding: 14px; margin-bottom: 16px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.8); line-height: 1.6; }
+  .api-note strong { color: var(--amber); }
+</style>
+</head>
+<body>
+
+<!-- SCREEN: SETUP -->
+<div id="screen-setup" class="screen active">
+  <div class="wrap">
+    <div class="setup-hero">
+      <div class="emoji">📐</div>
+      <h1>Math Quiz</h1>
+      <p>ALEKS-Style Practice · AI Powered</p>
+    </div>
+    <div class="api-note">
+      <strong>One-time setup:</strong> Enter your Anthropic API key below. It's saved only on this device and never shared.
+    </div>
+    <div class="card">
+      <div class="pill pill-cyan">API Key</div>
+      <p style="font-size:13px;color:rgba(255,255,255,0.6);font-weight:600;margin-bottom:14px;">
+        Get your key at <strong style="color:#67e8f9;">console.anthropic.com</strong> → API Keys
+      </p>
+      <input class="text-input" type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+      <div id="setup-error" class="error-msg"></div>
+      <div style="margin-top:14px;">
+        <button class="btn btn-cyan btn-full" onclick="saveApiKey()">Save &amp; Continue →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN: HOME -->
+<div id="screen-home" class="screen">
+  <div class="wrap">
+    <div class="setup-hero">
+      <div class="emoji">📐</div>
+      <h1>Math Quiz</h1>
+      <p>ALEKS-Style Practice</p>
+    </div>
+    <div class="card">
+      <div class="pill pill-cyan">New Quiz</div>
+      <p style="font-size:13px;color:rgba(255,255,255,0.65);font-weight:600;margin-bottom:16px;">
+        Upload a lesson file — AI will generate a 10-question quiz automatically.
+      </p>
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+        <div class="icon">📎</div>
+        <div class="label">Tap to upload lesson</div>
+        <div class="sub">PDF, PowerPoint (.pptx), or Word (.docx)</div>
+      </div>
+      <input type="file" id="file-input" accept=".pdf,.pptx,.ppt,.docx,.doc" style="display:none" onchange="handleFileSelect(this)">
+      <div id="home-error" class="error-msg"></div>
+    </div>
+    <div id="history-btn-wrap" style="display:none">
+      <button class="btn btn-ghost btn-full" onclick="showHistory()" style="gap:8px;">
+        <span>📊</span> <span id="history-btn-label">View History</span>
+      </button>
+    </div>
+    <div style="margin-top:20px;text-align:center;">
+      <button onclick="showScreen('screen-setup')" style="background:none;border:none;color:rgba(255,255,255,0.3);font-family:'Nunito',sans-serif;font-size:12px;cursor:pointer;font-weight:700;">⚙ Change API Key</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN: GENERATING -->
+<div id="screen-generating" class="screen">
+  <div id="gen-screen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:40px;">
+    <div>
+      <div class="spinner">⚙️</div>
+      <div style="font-size:18px;font-weight:800;margin-bottom:8px;">Building Your Quiz</div>
+      <div id="gen-status" style="font-size:14px;color:rgba(255,255,255,0.55);">Reading lesson file…</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN: QUIZ -->
+<div id="screen-quiz" class="screen">
+  <div id="prog-track"><div id="prog-fill" style="width:0%"></div></div>
+  <div class="wrap" style="padding-top:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div id="quiz-lesson-title" style="font-size:13px;font-weight:800;color:rgba(255,255,255,0.5);max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+      <div id="quiz-counter" style="font-size:13px;font-weight:800;background:rgba(255,255,255,0.1);border-radius:99px;padding:4px 12px;white-space:nowrap;"></div>
+    </div>
+    <div class="dots" id="dots-row"></div>
+    <div class="card">
+      <div class="pill" id="q-badge"></div>
+      <p id="q-instruction" style="font-size:14px;color:rgba(255,255,255,0.65);font-weight:600;margin-bottom:16px;"></p>
+      <div class="math-box" id="math-box"></div>
+      <div class="mode-toggle" id="mode-toggle">
+        <button class="mode-btn on" id="mode-btn-improper" onclick="setMode('improper')">Improper Fraction</button>
+        <button class="mode-btn"   id="mode-btn-mixed"    onclick="setMode('mixed')">Mixed Number</button>
+      </div>
+      <div class="answer-area">
+        <div class="answer-label">Your Answer</div>
+        <div class="input-row" id="input-row"></div>
+      </div>
+      <div class="feedback" id="feedback" style="display:none;"></div>
+      <div class="hint-box"  id="hint-box"  style="display:none;"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-hint"   id="btn-hint"  onclick="showHint()">💡</button>
+      <button class="btn btn-cyan"   id="btn-check" style="flex:1" onclick="checkAnswer()">Check Answer</button>
+      <button class="btn btn-indigo" id="btn-next"  style="flex:1;display:none;" onclick="nextQuestion()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN: RESULTS -->
+<div id="screen-results" class="screen">
+  <div class="wrap">
+    <div style="text-align:center;margin-bottom:24px;">
+      <div id="res-emoji"  style="font-size:60px;margin-bottom:10px;"></div>
+      <h2  id="res-title"  style="font-size:26px;font-weight:900;margin:0;"></h2>
+      <div id="res-lesson" style="font-size:13px;color:rgba(255,255,255,0.5);margin-top:4px;"></div>
+      <div id="res-score"  class="score-big" style="margin-top:12px;"></div>
+      <div id="res-denom"  style="font-size:16px;color:rgba(255,255,255,0.45);font-weight:700;"></div>
+      <div id="res-pct"    style="font-size:14px;color:rgba(255,255,255,0.4);font-weight:700;margin-top:2px;"></div>
+    </div>
+    <div class="card">
+      <div class="section-label">Question Review</div>
+      <div id="res-review"></div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-ghost"  style="flex:1" onclick="retryQuiz()">🔄 Retry</button>
+      <button class="btn btn-indigo" style="flex:1" onclick="showScreen('screen-home')">🏠 Home</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN: HISTORY -->
+<div id="screen-history" class="screen">
+  <div class="wrap">
+    <button class="back-btn" onclick="showScreen('screen-home')">← Back</button>
+    <div style="margin-bottom:20px;">
+      <div style="font-size:20px;font-weight:900;">Quiz History</div>
+      <div id="hist-count" style="font-size:12px;color:rgba(255,255,255,0.4);"></div>
+    </div>
+    <div id="hist-list"></div>
+    <div style="margin-top:16px;text-align:center;">
+      <button onclick="clearHistory()" style="background:none;border:none;color:rgba(255,255,255,0.25);font-family:'Nunito',sans-serif;font-size:12px;cursor:pointer;font-weight:700;">Clear All History</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const KEY_API  = 'mq_api_key';
+const KEY_HIST = 'mq_history';
+
+// ── API proxy endpoint (Netlify function) ────────────────────────────────────
+const PROXY = '/.netlify/functions/anthropic';
+
+let state = {
+  questions: [], lessonTitle: '',
+  qIndex: 0, sessionResults: [],
+  checked: false, hintShown: false, answerMode: 'improper'
+};
+
+const $ = id => document.getElementById(id);
+const gcd = (a,b) => { a=Math.abs(a); b=Math.abs(b); while(b){const t=b;b=a%b;a=t;} return a; };
+const fracEq = (n1,d1,n2,d2) => d1!==0 && d2!==0 && n1*d2===n2*d1;
+
+function simplify(n,d){ const g=gcd(n,d); return {n:n/g,d:d/g}; }
+function formatAnswer(q){
+  if(q.isMixedAnswer) return `${q.mixedWhole} ${q.mixedN}/${q.mixedD}`;
+  const s=simplify(q.answerN,q.answerD);
+  return s.d===1 ? `${s.n}` : `${s.n}/${s.d}`;
+}
+function mixedNumHTML(whole,n,d){
+  return `<span class="mixed"><span class="whole">${whole}</span><span class="frac"><span class="fnum">${n}</span><span class="fline"></span><span class="fden">${d}</span></span></span>`;
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ── API Key ───────────────────────────────────────────────────────────────────
+function saveApiKey(){
+  const key=$('api-key-input').value.trim();
+  if(!key.startsWith('sk-')){
+    $('setup-error').textContent="That doesn't look like a valid Anthropic API key (should start with sk-).";
+    return;
+  }
+  localStorage.setItem(KEY_API,key);
+  $('setup-error').textContent='';
+  showScreen('screen-home');
+  refreshHistoryButton();
+}
+function getApiKey(){ return localStorage.getItem(KEY_API)||''; }
+
+// ── History ───────────────────────────────────────────────────────────────────
+function loadHistory(){ try{ return JSON.parse(localStorage.getItem(KEY_HIST)||'[]'); }catch{ return []; } }
+function saveHistoryData(arr){ localStorage.setItem(KEY_HIST,JSON.stringify(arr.slice(0,50))); }
+function clearHistory(){
+  if(!confirm('Clear all quiz history?')) return;
+  localStorage.removeItem(KEY_HIST);
+  renderHistory();
+  refreshHistoryButton();
+}
+function refreshHistoryButton(){
+  const h=loadHistory();
+  const wrap=$('history-btn-wrap');
+  if(h.length>0){
+    wrap.style.display='block';
+    $('history-btn-label').textContent=`View History (${h.length} sessions)`;
+  } else { wrap.style.display='none'; }
+}
+function showHistory(){ renderHistory(); showScreen('screen-history'); }
+function renderHistory(){
+  const hist=loadHistory();
+  $('hist-count').textContent=`${hist.length} session${hist.length!==1?'s':''} saved`;
+  const list=$('hist-list');
+  if(hist.length===0){ list.innerHTML='<div style="text-align:center;color:rgba(255,255,255,0.35);font-size:14px;margin-top:32px;">No history yet.</div>'; return; }
+  list.innerHTML=hist.map(h=>{
+    const pct=Math.round((h.score/h.total)*100);
+    const col=pct>=80?'#4ade80':pct>=60?'#fbbf24':'#f87171';
+    return `<div class="card hist-item"><div><div style="font-size:14px;font-weight:800;">${h.lesson}</div><div style="font-size:12px;color:rgba(255,255,255,0.4);margin-top:3px;">${h.date}</div></div><div style="text-align:right;"><div class="hist-score" style="color:${col}">${h.score}/${h.total}</div><div class="hist-pct">${pct}%</div></div></div>`;
+  }).join('');
+}
+
+// ── File handling ─────────────────────────────────────────────────────────────
+function handleFileSelect(input){ const f=input.files[0]; if(f) processFile(f); input.value=''; }
+
+const uploadZone=$('upload-zone');
+uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('drag');});
+uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('drag'));
+uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.remove('drag');const f=e.dataTransfer.files[0];if(f)processFile(f);});
+
+function toBase64(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result.split(',')[1]); r.onerror=rej; r.readAsDataURL(file); }); }
+function getMediaType(file){
+  if(file.type==='application/pdf'||file.name.match(/\.pdf$/i)) return 'application/pdf';
+  if(file.name.match(/\.pptx?$/i)) return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+  return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+}
+
+async function processFile(file){
+  if(!/\.(pdf|pptx|ppt|docx|doc)$/i.test(file.name)){
+    $('home-error').textContent='Please upload a PDF, PowerPoint (.pptx), or Word (.docx) file.'; return;
+  }
+  const apiKey=getApiKey();
+  if(!apiKey){ showScreen('screen-setup'); return; }
+
+  $('home-error').textContent='';
+  showScreen('screen-generating');
+  $('gen-status').textContent='Reading your lesson file…';
+
+  try {
+    const b64=await toBase64(file);
+    const mediaType=getMediaType(file);
+    $('gen-status').textContent='Analyzing lesson content with AI…';
+
+    const systemPrompt=`You are a math quiz generator for middle school students.
+Given a lesson document, extract the math topic and generate exactly 10 ALEKS-style quiz questions.
+Respond ONLY with valid JSON — no markdown, no code fences, no explanation.
+
+JSON schema:
+{
+  "title": "short lesson title",
+  "questions": [
+    {
+      "id": 1,
+      "badge": "ADDITION" | "SUBTRACTION" | "CONCEPT CHECK" | "SIMPLIFY" | "CONVERT",
+      "instruction": "e.g. Add. Write your answer as an improper fraction in simplest form.",
+      "display": "plain-text problem e.g. 3 2/5 + 4 1/3",
+      "num1": { "whole": 3, "n": 2, "d": 5 },
+      "op": "+" | "-" | null,
+      "num2": { "whole": 4, "n": 1, "d": 3 } | null,
+      "answerN": 116,
+      "answerD": 15,
+      "isMixedAnswer": false,
+      "mixedWhole": null,
+      "mixedN": null,
+      "mixedD": null,
+      "hint": ["step 1", "step 2", "step 3", "step 4"]
+    }
+  ]
+}
+
+Rules:
+- answerN/answerD = fully simplified improper fraction (or N/1 for whole numbers).
+- If the natural answer is a mixed number set isMixedAnswer=true and fill mixedWhole/mixedN/mixedD.
+- For CONVERT problems: op=null, num2=null.
+- Hints: 3-5 concrete steps specific to this exact problem with actual numbers.
+- Mix question types: additions, subtractions, conversions.
+- Middle-school numbers: denominators 2-12, whole numbers 1-15.`;
+
+    // Call through Netlify proxy — no CORS issues
+    const resp = await fetch(PROXY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        apiKey,
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        system: systemPrompt,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'document', source: { type: 'base64', media_type: mediaType, data: b64 } },
+            { type: 'text', text: 'Generate 10 ALEKS-style quiz questions from this lesson. Return only JSON.' }
+          ]
+        }]
+      })
+    });
+
+    if(resp.status===401){ throw new Error('invalid_key'); }
+    if(!resp.ok){ throw new Error(`api_error_${resp.status}`); }
+
+    const data=await resp.json();
+    const raw=data.content?.find(b=>b.type==='text')?.text||'';
+    const clean=raw.replace(/```json|```/g,'').trim();
+    const parsed=JSON.parse(clean);
+    if(!parsed.questions||parsed.questions.length===0) throw new Error('no_questions');
+
+    state.questions=parsed.questions;
+    state.lessonTitle=parsed.title||file.name.replace(/\.[^.]+$/,'');
+    state.qIndex=0; state.sessionResults=[]; state.checked=false; state.hintShown=false; state.answerMode='improper';
+
+    renderQuestion();
+    showScreen('screen-quiz');
+
+  } catch(err){
+    showScreen('screen-home');
+    if(err.message==='invalid_key'){
+      $('home-error').textContent='Invalid API key. Tap "Change API Key" below to update it.';
+    } else if(err.message==='no_questions'){
+      $('home-error').textContent="Couldn't generate questions from that file. Try a different document.";
+    } else {
+      $('home-error').textContent='Something went wrong: '+err.message+'. Please try again.';
+    }
+  }
+}
+
+// ── Quiz render ───────────────────────────────────────────────────────────────
+function renderQuestion(){
+  const q=state.questions[state.qIndex];
+  const total=state.questions.length;
+  const idx=state.qIndex;
+
+  $('prog-fill').style.width=`${(idx/total)*100}%`;
+  $('quiz-lesson-title').textContent=state.lessonTitle;
+  $('quiz-counter').textContent=`${idx+1} / ${total}`;
+
+  const dotsRow=$('dots-row'); dotsRow.innerHTML='';
+  for(let i=0;i<total;i++){
+    const d=document.createElement('div');
+    d.className='dot'+(i<state.sessionResults.length?(state.sessionResults[i].correct?' ok':' bad'):i===idx?' current':'');
+    dotsRow.appendChild(d);
+  }
+
+  const badge=$('q-badge');
+  badge.textContent=q.badge;
+  badge.className='pill '+(q.badge.includes('ADD')?'pill-cyan':q.badge.includes('SUB')?'pill-red':q.badge.includes('CONV')?'pill-violet':'pill-amber');
+  $('q-instruction').textContent=q.instruction;
+
+  let mathHTML=mixedNumHTML(q.num1.whole,q.num1.n,q.num1.d);
+  if(q.op){ mathHTML+=`<span class="op-sym">${q.op}</span>`; if(q.num2) mathHTML+=mixedNumHTML(q.num2.whole,q.num2.n,q.num2.d); }
+  else { mathHTML+=`<span style="font-size:24px;color:rgba(255,255,255,0.4);margin:0 6px">=</span><span style="font-size:24px;color:rgba(255,255,255,0.3)">?</span>`; }
+  $('math-box').innerHTML=mathHTML;
+
+  const toggle=$('mode-toggle');
+  if(q.isMixedAnswer||!q.op){ toggle.style.display='none'; state.answerMode=q.isMixedAnswer?'mixed':'improper'; }
+  else { toggle.style.display='flex'; state.answerMode='improper'; $('mode-btn-improper').className='mode-btn on'; $('mode-btn-mixed').className='mode-btn'; }
+
+  renderInputs();
+  $('feedback').style.display='none';
+  $('hint-box').style.display='none';
+  state.hintShown=false; state.checked=false;
+  $('btn-check').style.display=''; $('btn-next').style.display='none'; $('btn-hint').style.display='';
+}
+
+function renderInputs(){
+  const isMixed=state.answerMode==='mixed'||state.questions[state.qIndex].isMixedAnswer;
+  const row=$('input-row');
+  if(isMixed){
+    row.innerHTML=`<input class="num-input wide" type="number" inputmode="numeric" id="in-w" placeholder="?" min="0"><div class="frac-inputs"><input class="num-input" type="number" inputmode="numeric" id="in-n" placeholder="?" min="0"><div class="frac-line"></div><input class="num-input" type="number" inputmode="numeric" id="in-d" placeholder="?" min="1"></div><span style="font-size:12px;color:rgba(255,255,255,0.4);font-weight:700;">whole + frac</span>`;
+  } else {
+    row.innerHTML=`<div class="frac-inputs"><input class="num-input" type="number" inputmode="numeric" id="in-n" placeholder="?" min="0"><div class="frac-line"></div><input class="num-input" type="number" inputmode="numeric" id="in-d" placeholder="?" min="1"></div><span style="font-size:12px;color:rgba(255,255,255,0.4);font-weight:700;">num / denom</span>`;
+  }
+  row.querySelectorAll('input').forEach(inp=>inp.addEventListener('keydown',e=>{if(e.key==='Enter')checkAnswer();}));
+  setTimeout(()=>{ const f=row.querySelector('input'); if(f)f.focus(); },80);
+}
+
+function setMode(mode){
+  state.answerMode=mode;
+  $('mode-btn-improper').className='mode-btn'+(mode==='improper'?' on':'');
+  $('mode-btn-mixed').className   ='mode-btn'+(mode==='mixed'   ?' on':'');
+  renderInputs();
+}
+
+function checkAnswer(){
+  if(state.checked) return;
+  const q=state.questions[state.qIndex];
+  const nEl=$('in-n'), dEl=$('in-d'), wEl=$('in-w');
+  const userN=parseInt(nEl?.value), userD=parseInt(dEl?.value), userW=parseInt(wEl?.value)||0;
+
+  if(isNaN(userN)||isNaN(userD)||userD===0){
+    showFeedback(false,'Fill in both boxes — numerator and denominator (not zero).',true); return;
+  }
+
+  let correct=false;
+  const isMixed=state.answerMode==='mixed'||q.isMixedAnswer;
+  if(isMixed){
+    const tW=q.mixedWhole??Math.floor(q.answerN/q.answerD);
+    const tN=q.mixedN??(q.answerN%q.answerD);
+    const tD=q.mixedD??q.answerD;
+    correct=(userW===tW)&&fracEq(userN,userD,tN,tD);
+  } else {
+    correct=fracEq(userN,userD,q.answerN,q.answerD);
+  }
+
+  const cls=correct?'ok':'bad';
+  [nEl,dEl,wEl].filter(Boolean).forEach(el=>{el.classList.add(cls);el.disabled=true;});
+  state.checked=true;
+  state.sessionResults.push({q,correct,hintUsed:state.hintShown});
+
+  const dots=$('dots-row').children;
+  if(dots[state.qIndex]) dots[state.qIndex].className='dot '+(correct?'ok':'bad');
+
+  showFeedback(correct,correct?`Correct! The answer is ${formatAnswer(q)}.`:`Not quite. The correct answer is <strong>${formatAnswer(q)}</strong>.`);
+  $('btn-check').style.display='none'; $('btn-next').style.display=''; $('btn-hint').style.display='none';
+  $('btn-next').textContent=state.qIndex+1>=state.questions.length?'See Results 🎯':'Next →';
+}
+
+function showFeedback(ok,msg,isWarn=false){
+  const el=$('feedback');
+  if(isWarn){ el.className='feedback'; el.style.background='rgba(251,191,36,0.12)'; el.style.border='1.5px solid rgba(251,191,36,0.35)'; el.innerHTML=`<span class="fb-icon">⚠️</span><div><div class="fb-title">Almost!</div><div class="fb-detail">${msg}</div></div>`; }
+  else { el.className=`feedback ${ok?'ok':'bad'}`; el.style.background=''; el.style.border=''; el.innerHTML=`<span class="fb-icon">${ok?'✅':'❌'}</span><div><div class="fb-title">${ok?'Correct!':'Not quite.'}</div><div class="fb-detail">${msg}</div></div>`; }
+  el.style.display='flex';
+}
+
+function showHint(){
+  state.hintShown=true;
+  const q=state.questions[state.qIndex];
+  const box=$('hint-box');
+  box.innerHTML=`<div class="hint-title">💡 Step-by-Step Hint</div>`+q.hint.map((s,i)=>`<div class="hint-step"><span class="step-num">${i+1}</span>${s}</div>`).join('');
+  box.style.display='block';
+}
+
+async function nextQuestion(){
+  if(state.qIndex+1>=state.questions.length){ await finishQuiz(); }
+  else { state.qIndex++; renderQuestion(); }
+}
+
+async function finishQuiz(){
+  const correct=state.sessionResults.filter(r=>r.correct).length;
+  const total=state.questions.length;
+  const pct=Math.round((correct/total)*100);
+  const entry={ id:Date.now(), date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}), lesson:state.lessonTitle, score:correct, total, results:state.sessionResults.map(r=>({display:r.q.display,correct:r.correct,answer:formatAnswer(r.q),hintUsed:r.hintUsed})) };
+  const hist=[entry,...loadHistory()];
+  saveHistoryData(hist);
+  refreshHistoryButton();
+
+  const emoji=pct>=90?'🌟':pct>=70?'🎉':pct>=50?'💪':'📚';
+  const title=pct>=90?'Outstanding!':pct>=70?'Great Work!':pct>=50?'Good Effort!':'Keep Practicing!';
+  $('res-emoji').textContent=emoji; $('res-title').textContent=title;
+  $('res-lesson').textContent=state.lessonTitle;
+  $('res-score').textContent=correct; $('res-denom').textContent=`out of ${total}`; $('res-pct').textContent=`${pct}%`;
+  $('res-review').innerHTML=state.sessionResults.map((r,i)=>`<div class="result-item ${r.correct?'ok':'bad'}"><span class="ri-icon">${r.correct?'✓':'✗'}</span><div><div class="ri-prob">Q${i+1}: ${r.q.display}</div><div class="ri-ans">${r.correct?'Correct':`Answer: ${formatAnswer(r.q)}`}${r.hintUsed?' · used hint':''}</div></div></div>`).join('');
+  showScreen('screen-results');
+}
+
+function retryQuiz(){
+  state.qIndex=0; state.sessionResults=[]; state.checked=false; state.hintShown=false; state.answerMode='improper';
+  renderQuestion(); showScreen('screen-quiz');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+(function init(){
+  const key=getApiKey();
+  if(key){ $('api-key-input').value=key; showScreen('screen-home'); }
+  else { showScreen('screen-setup'); }
+  refreshHistoryButton();
+})();
+</script>
+</body>
+</html>
